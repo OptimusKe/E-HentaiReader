@@ -83,7 +83,7 @@
 	HentaiNavigationController *hentaiNavigation = (HentaiNavigationController *)self.navigationController;
 	hentaiNavigation.autorotate = NO;
 	hentaiNavigation.hentaiMask = UIInterfaceOrientationMaskPortrait;
-
+    
 	//FakeViewController 是一個硬把畫面轉直的媒介
 	FakeViewController *fakeViewController = [FakeViewController new];
 	fakeViewController.BackBlock = ^() {
@@ -109,23 +109,23 @@
 
 - (void)setupInitValues {
 	self.title = @"Loading...";
-
+    
 	//navigation bar 上的兩個 button
 	UIBarButtonItem *newBackButton = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStyleBordered target:self action:@selector(backAction)];
 	self.navigationItem.leftBarButtonItem = newBackButton;
 	UIBarButtonItem *saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemOrganize target:self action:@selector(saveAction)];
 	self.navigationItem.rightBarButtonItem = saveButton;
-
+    
 	//註冊 cell
 	[self.hentaiTableView registerClass:[HentaiPhotoCell class] forCellReuseIdentifier:@"HentaiPhotoCell"];
-
+    
 	self.hentaiURLString = self.hentaiInfo[@"url"];
 	self.maxHentaiCount = self.hentaiInfo[@"filecount"];
-
+    
 	//OperationQueue 限制數量為 5
 	self.hentaiQueue = [NSOperationQueue new];
 	[self.hentaiQueue setMaxConcurrentOperationCount:5];
-
+    
 	//相關參數初始化
 	self.hentaiImageURLs = [NSMutableArray array];
 	self.retryMap = [NSMutableDictionary dictionary];
@@ -285,7 +285,7 @@
 			retryCount = @(1);
 		}
 		self.retryMap[urlString] = retryCount;
-
+        
 		if ([retryCount integerValue] <= 3) {
 			[self createNewOperation:urlString];
 		}
@@ -306,7 +306,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	// 當前頁數 / ( 可到頁數 / 已下載頁數 / 總共頁數 )
 	self.title = [NSString stringWithFormat:@"%d/(%d/%d/%@)", indexPath.row + 1, self.realDisplayCount, [self.hentaiResults count], self.maxHentaiCount];
-
+    
 	//無限滾
 	if (indexPath.row >= [self.hentaiImageURLs count] - 20 && ([self.hentaiImageURLs count] + self.failCount) == (self.hentaiIndex + 1) * 40 && [self.hentaiImageURLs count] < [self.maxHentaiCount integerValue]) {
 		self.hentaiIndex++;
@@ -319,18 +319,18 @@
 			}
 		}];
 	}
-
+    
 	static NSString *cellIdentifier = @"HentaiPhotoCell";
 	HentaiPhotoCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
 	NSString *eachImageString = self.hentaiImageURLs[indexPath.row];
 	if (self.hentaiResults[[eachImageString lastPathComponent]]) {
 		NSIndexPath *copyIndexPath = [indexPath copy];
 		__weak PhotoViewController *weakSelf = self;
-
+        
 		//讀取不卡線程
 		dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
 		    UIImage *image = [UIImage imageWithData:[weakSelf.hentaiFilesManager read:[eachImageString lastPathComponent]]];
-
+            
 		    if ([[tableView indexPathForCell:cell] compare:copyIndexPath] == NSOrderedSame && weakSelf) {
 		        dispatch_async(dispatch_get_main_queue(), ^{
 		            cell.hentaiImageView.image = image;
@@ -374,31 +374,23 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 	[self setupInitValues];
-
+    
 	self.downloadKey = [self foundDownloadKey];
-
+    
 	HentaiHeaderView *headerView = [[[NSBundle mainBundle] loadNibNamed:@"HentaiHeaderView" owner:self options:nil] objectAtIndex:0];
 	[headerView setHentaiDict:self.hentaiInfo];
-    [headerView setBackgroundColor:[UIColor lightGrayColor]];
-
-    [headerView setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[headerView setBackgroundColor:[UIColor lightGrayColor]];
     
-
-    [self.hentaiTableView addConstraint:[NSLayoutConstraint constraintWithItem:self.hentaiTableView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:headerView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0]];
     
-    [self.hentaiTableView addConstraint:[NSLayoutConstraint constraintWithItem:self.hentaiTableView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:headerView attribute:NSLayoutAttributeTop multiplier:1.0 constant:0]];
-
-    
-    CGFloat height = [headerView systemLayoutSizeFittingSize:UILayoutFittingCompressedSize].height;
+	CGFloat height = [headerView systemLayoutSizeFittingSize:UILayoutFittingCompressedSize].height;
 	CGRect frame = headerView.frame;
 	frame.size.height = height;
 	headerView.frame = frame;
-    self.hentaiTableView.tableHeaderView = headerView;
-
+	self.hentaiTableView.tableHeaderView = headerView;
     
     
-
-
+    
+    
 	//如果本機有存檔案就用本機的
 	if (self.downloadKey != NSNotFound) {
 		[self setupForAlreadyDownloadKey:self.downloadKey];
@@ -430,11 +422,11 @@
 
 - (void)viewWillDisappear:(BOOL)animated {
 	[super viewWillDisappear:animated];
-
+    
 	if (!self.isRemovedHUD) {
 		[SVProgressHUD dismiss];
 	}
-
+    
 	//結束時把 queue 清掉, 並且記錄目前已下載的東西有哪些
 	[self.hentaiQueue cancelAllOperations];
 	if (self.downloadKey != NSNotFound) {
