@@ -8,6 +8,7 @@
 
 #import "PhotoViewController.h"
 #import "HentaiHeaderView.h"
+#import "UINavigationController+M13ProgressViewBar.h"
 
 @interface PhotoViewController ()
 
@@ -227,7 +228,7 @@
 		[HentaiSaveLibraryArray addObject:saveInfo];
 		self.downloadKey = [HentaiSaveLibraryArray indexOfObject:saveInfo];
 		[self setupForAlreadyDownloadKey:self.downloadKey];
-		[SVProgressHUD dismiss];
+		[self.navigationController setIndeterminate:NO];
 	}
 }
 
@@ -256,7 +257,7 @@
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
 	if (buttonIndex) {
-		[SVProgressHUD showWithMaskType:SVProgressHUDMaskTypeClear];
+		[self.navigationController setIndeterminate:YES];
 		[self waitingOnDownloadFinish];
 	}
 }
@@ -270,7 +271,7 @@
 		if (availableCount > self.realDisplayCount) {
 			if (availableCount >= 1 && !self.isRemovedHUD) {
 				self.isRemovedHUD = YES;
-				[SVProgressHUD dismiss];
+				[self.navigationController setIndeterminate:NO];
 			}
 			self.realDisplayCount = availableCount;
 			[self.hentaiTableView reloadData];
@@ -388,7 +389,7 @@
 	headerView.frame = frame;
 	self.hentaiTableView.tableHeaderView = headerView;
     
-    
+	[self.navigationController showProgress];
     
     
 	//如果本機有存檔案就用本機的
@@ -398,7 +399,7 @@
 	//否則則從網路上取得
 	else {
 		self.hentaiFilesManager = [[[FilesManager cacheFolder] fcd:@"Hentai"] fcd:self.hentaiKey];
-		[SVProgressHUD showWithMaskType:SVProgressHUDMaskTypeClear];
+		[self.navigationController setIndeterminate:YES];
 		__weak PhotoViewController *weakSelf = self;
 		[HentaiParser requestImagesAtURL:self.hentaiURLString atIndex:self.hentaiIndex completion: ^(HentaiParserStatus status, NSArray *images) {
 		    if (status && weakSelf) {
@@ -409,12 +410,12 @@
 		    else if (!status && weakSelf) {
 		        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"讀取失敗囉" message:nil delegate:nil cancelButtonTitle:@"確定" otherButtonTitles:nil];
 		        [alert show];
-		        [SVProgressHUD dismiss];
+		        [weakSelf.navigationController setIndeterminate:NO];
 			}
 		    else if ([images count] == 0) {
 		        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"讀取失敗囉" message:nil delegate:nil cancelButtonTitle:@"確定" otherButtonTitles:nil];
 		        [alert show];
-		        [SVProgressHUD dismiss];
+		        [weakSelf.navigationController setIndeterminate:NO];
 			}
 		}];
 	}
@@ -424,7 +425,7 @@
 	[super viewWillDisappear:animated];
     
 	if (!self.isRemovedHUD) {
-		[SVProgressHUD dismiss];
+		[self.navigationController setIndeterminate:NO];
 	}
     
 	//結束時把 queue 清掉, 並且記錄目前已下載的東西有哪些
@@ -436,6 +437,10 @@
 		HentaiCacheLibraryDictionary[self.hentaiKey] = self.hentaiResults;
 	}
 	LWPForceWrite();
+}
+
+- (void)dealloc {
+	[self.navigationController cancelProgress];
 }
 
 @end
